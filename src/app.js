@@ -4,13 +4,15 @@ const pg = require('pg');
 const app = express()
 const port = 3000
 
-const client = new pg.Client({
+const client = new pg.Pool({
   host: 'localhost',
   user: 'test',
   password: 'test',
   database: 'test',
   port: 5432,
-  statement_timeout: 1000,
+  statement_timeout: 60000,
+  min: 5,
+  max: 50,
 })
 
 client.connect(err => {
@@ -26,17 +28,18 @@ app.get('/', (req, res) => {
 });
 
 app.get('/test-timeout', async (req, res) => {
-  const name = 'test-timeout';
+  const start = new Date();
   try {
-    console.time(name);
-    await client.query('SELECT pg_sleep(2);');
-    console.timeEnd(name);
+    await client.query('SELECT pg_sleep(3);');
+    const lag = new Date() - start;
+    console.log(`Lag: \t${lag} ms`);
   } catch (e) {
-    console.timeEnd(name);
+    const lag = new Date() - start;
+    console.log(`Lag: \t${lag} ms`);
     console.error('pg error', e);
   }
 
-  res.send('test-timeout!')
+  res.send('test-timeout!');
 })
 
 
