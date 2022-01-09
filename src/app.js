@@ -40,8 +40,29 @@ app.get('/test-timeout', async (req, res) => {
   }
 
   res.send('test-timeout!');
-})
+});
 
+app.get('/test-timeout2', async (req, res) => {
+  const start = new Date();
+  const sleep = getRandomInt(1, 5);
+  try {
+    await client.query(`SELECT pg_sleep(${sleep});`);
+    const lag = new Date() - start;
+    console.log(`Lag: \t${lag} ms`);
+  } catch (e) {
+    const lag = new Date() - start;
+    console.log(`Lag: \t${lag} ms`);
+    console.error('pg error', e);
+  }
+
+  res.send('test-timeout2!');
+});
+
+function getRandomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min + 1)) + min; //최댓값도 포함, 최솟값도 포함
+}
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
