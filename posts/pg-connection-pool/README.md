@@ -10,7 +10,7 @@
 * 요청당 평균 시간
   * `Time per request` 의 첫번째 값
   * 이 요청은 60344 ms, 즉 평균 60초가 요청되었다
-* 예상되는 평규 응답시간
+* 예상되는 평균 응답시간
   * `Percentage of the requests served...` 항목
   * 60307ms ~ 60435ms 로 응답한다
 * 초당 요청
