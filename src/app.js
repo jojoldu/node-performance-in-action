@@ -10,7 +10,7 @@ const client = new pg.Pool({
   password: 'test',
   database: 'test',
   port: 5432,
-  statement_timeout: 1000,
+  statement_timeout: 5000,
   min: 5,
   max: 50,
 })
