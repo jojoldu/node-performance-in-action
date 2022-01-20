@@ -11,8 +11,7 @@ const client = new pg.Pool({
   database: 'test',
   port: 5432,
   statement_timeout: 5000,
-  min: 5,
-  max: 50,
+  max: 1,
 })
 
 client.connect(err => {

@@ -1,6 +1,9 @@
 # NodeJS 와 PostgreSQL Connection Pool
 
-Database에 관해 기본적인 id/pw만 설정해서는 전체 
+Database에 관해 기본적인 id/pw 외에 해야할 설정들이 여러개 있는데요.  
+그 중 실제 서비스 운영에 가장 중요한 설정 중 하나가 이전 글인 [쿼리 타임아웃](https://jojoldu.tistory.com/631) 과 함께 커넥션 풀 (Connection Pool) 설정입니다.  
+  
+이 커넥션풀 설정이 왜 필요한지, 어떻게 해야할지 등등을 알아보겠습니다.
 
 ## 1. 실험 환경
 
@@ -28,8 +31,7 @@ const client = new pg.Pool({
   password: 'test',
   database: 'test',
   port: 5432,
-  min: 5,
-  max: 50,
+  max: 1,
 })
 
 client.connect(err => {
@@ -71,6 +73,25 @@ app.listen(port, () => {
 * API 호출시 강제로 3초의 쿼리를 발생시키고 (`await client.query('SELECT pg_sleep(3);');`)
 * 실제로 3초의 시간만 수행 되었는지 로그로 출력 (`const lag = new Date() - start;`)
 
+여기서 핵심은 바로 아래와 같이 `pool` 의 `max: 1` 설정입니다.
+
+```javascript
+const client = new pg.Pool({
+  host: 'localhost',
+  user: 'test',
+  password: 'test',
+  database: 'test',
+  port: 5432,
+  max: 1,
+})
+```
+
+이렇게 하면 **최대 Connection 생성 개수가 1로 설정**됩니다.  
+
+
+> 커넥션풀에 대한 자세한 설명은 Java 기반이긴 하지만, [네이버 D2 글](https://d2.naver.com/helloworld/5102792) 을 참고하면 좋습니다.  
+> Node로 된 글 중에서 이정도로 자세하게 커넥션 풀에 대해 설명한 글이 없어서 부득이하게 자바로 된 글을 첨부합니다.
+
 ## 2. 테스트
 
 일정 트래픽을 몰아주기 위해서 테스트는 [Apache Bench](https://httpd.apache.org/docs/2.4/ko/programs/ab.html) 를 통해 진행합니다.
@@ -96,23 +117,23 @@ ab -n 100 -c 20 http://localhost:3000/test-timeout/
 
 ![pool1-result](./images/pool1-result.png)
 
-* 이 테스트는 **20명의 동시 사용자로 총 100번을 호출**했다
+* 이 테스트는 **20명의 동시 사용자로 총 100번을 호출**
 * 요청당 평균 시간
   * `Time per request` 의 첫번째 값
-  * 이 요청은 60344 ms, 즉 평균 60초가 요청되었다
+  * 이 요청은 60344 ms, 즉 평균 60초가 요청
 * 예상되는 평균 응답시간
   * `Percentage of the requests served...` 항목
   * 60307ms ~ 60435ms 로 응답한다
 * 초당 요청
   * `Request per second` 항목
   * 1초에 최대 요청양을 이야기한다.
-  * 현재 0.33 인데, 이는 **1초에 1건도 처리 못한다**는 것을 의미한다.
+  * 현재 0.33 인데, 이는 **1초에 1건도 처리 못한다**는 것을 의미
 
 
-```bash
-ab -n 1000 -c 15 -s 600 http://localhost:3000/test-timeout/
-```
+이 테스트를 보면 **평균 60초의 응답시간**을 주었다는 것을 알 수 있는데요.  
+**3초 쿼리를 호출하는데**, 왜 60초가 평균 응답시간이 되었을까요?  
 
+### 
 ## 주의사항
 
 무조건적으로 
