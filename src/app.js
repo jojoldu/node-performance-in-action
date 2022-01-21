@@ -11,7 +11,8 @@ const client = new pg.Pool({
   database: 'test',
   port: 5432,
   statement_timeout: 5000,
-  max: 1,
+  connectionTimeoutMillis: 30000,
+  max: 2,
 })
 
 client.connect(err => {
@@ -23,7 +24,7 @@ client.connect(err => {
 })
 
 app.get('/', (req, res) => {
-  res.send('Hello World!')
+  res.send('Hello World!');
 });
 
 app.get('/test-timeout', async (req, res) => {
