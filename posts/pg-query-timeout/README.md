@@ -22,7 +22,7 @@
 
 > lint 등을 빼고 실험을 위해 빠르게 구성했습니다.
 
-**app.js**
+**app.ts**
 
 ```javascript
 const express = require('express');

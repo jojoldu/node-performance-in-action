@@ -28,13 +28,13 @@ app.get('/', (req, res) => {
 });
 
 app.get('/test-timeout', async (req, res) => {
-  const start = new Date();
+  const start = new Date().getMilliseconds();
   try {
     await client.query('SELECT pg_sleep(3);');
-    const lag = new Date() - start;
+    const lag = new Date().getMilliseconds() - start;
     console.log(`Lag: \t${lag} ms`);
   } catch (e) {
-    const lag = new Date() - start;
+    const lag = new Date().getMilliseconds() - start;
     console.log(`Lag: \t${lag} ms`);
     console.error('pg error', e);
   }
@@ -43,14 +43,14 @@ app.get('/test-timeout', async (req, res) => {
 });
 
 app.get('/test-timeout2', async (req, res) => {
-  const start = new Date();
+  const start = new Date().getMilliseconds();
   const sleep = getRandomInt(1, 5);
   try {
     await client.query(`SELECT pg_sleep(${sleep});`);
-    const lag = new Date() - start;
+    const lag = new Date().getMilliseconds() - start;
     console.log(`Lag: \t${lag} ms`);
   } catch (e) {
-    const lag = new Date() - start;
+    const lag = new Date().getMilliseconds() - start;
     console.log(`Lag: \t${lag} ms`);
     console.error('pg error', e);
   }

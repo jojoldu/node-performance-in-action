@@ -16,7 +16,7 @@ Database에 관해 기본적인 id/pw 외에 해야할 설정들이 여러개 �
 
 > 실험을 위해 lint 등을 빼고 빠르게 구성했습니다.
 
-**app.js**
+**app.ts**
 
 ```javascript
 const express = require('express');
