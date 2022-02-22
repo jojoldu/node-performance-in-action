@@ -1,6 +1,16 @@
-import { deleteAll, insert, selectAll } from '../src/tx';
+import { deleteAll, insert, insertAll, insertAll2, selectAll } from '../src/tx';
 
 describe('tx', () => {
+    function sleep(ms) {
+        return new Promise((resolve) => {
+            setTimeout(resolve, ms);
+        });
+    }
+
+    beforeEach(async () => {
+        await deleteAll();
+    });
+
     afterEach(async () => {
         await deleteAll();
     });
@@ -12,5 +22,24 @@ describe('tx', () => {
         expect(result.length).toBe(1);
     });
 
+    it('insertAll', async () => {
+        await insertAll(5, 4);
+
+        await sleep(5000);
+        const result = await selectAll();
+
+        expect(result.length).toBe(0);
+
+    }, 10000);
+
+    it('insertAll2', async () => {
+        await insertAll2(5, 4);
+
+        await sleep(5000);
+        const result = await selectAll();
+
+        expect(result.length).toBe(0);
+
+    }, 30000);
 
 });
