@@ -23,23 +23,25 @@ describe('tx', () => {
     });
 
     it('insertAll', async () => {
-        await insertAll(5, 4);
+        await insertAll(5, 2);
 
         await sleep(5000);
         const result = await selectAll();
 
+        console.log(result.map(r => r.amount));
         expect(result.length).toBe(0);
 
     }, 10000);
 
     it('insertAll2', async () => {
-        await insertAll2(5, 4);
+        await insertAll2(5, 2);
 
         await sleep(5000);
         const result = await selectAll();
 
+        console.log(result.map(r => r.amount));
         expect(result.length).toBe(0);
 
-    }, 30000);
+    }, 60000);
 
 });

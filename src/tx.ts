@@ -60,12 +60,12 @@ export async function insert(sec: number, failSec: number) {
         throw new Error('Insert Exception');
     }
 
-    const sql = `insert into sample (created_at, updated_at, name, amount, order_date, order_date_time) values (now(), now(), pg_sleep(${sec}), 1000, now(), now())`;
+    const sql = `insert into sample (created_at, updated_at, name, amount, order_date, order_date_time) values (now(), now(), pg_sleep(${sec}), ${sec}, now(), now())`;
     const client = await pool.connect();
     return client.query(sql);
 }
 
-export async function selectAll(): Promise<object[]> {
+export async function selectAll(): Promise<ISample[]> {
     const client = await pool.connect();
     const query = await client.query('select * from sample');
     return query.rows;
