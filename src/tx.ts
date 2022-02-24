@@ -1,4 +1,5 @@
 import { Pool, PoolClient } from 'pg';
+import { performance } from 'perf_hooks';
 
 const pg = require('pg');
 
@@ -8,7 +9,7 @@ const pool:Pool = new pg.Pool({
     password: 'test',
     database: 'test',
     port: 5432,
-    statement_timeout: 10000,
+    statement_timeout: 60000,
     connectionTimeoutMillis: 30000,
     max: 30,
 });
@@ -25,9 +26,8 @@ export async function insertAll(size: number, failSec: number) {
     try {
         await client.query('BEGIN');
 
-        const promises = Array(size).fill(0)
-            .map((_, i) => insert(i+1, failSec));
-        await Promise.all(promises)
+        await Promise.all(Array(size).fill(0)
+            .map((_, i) => insert(i+1, failSec)))
 
        await commit(client);
     } catch (error) {
@@ -44,10 +44,8 @@ export async function insertAll2(size: number, failSec: number) {
     try {
         await client.query('BEGIN');
 
-        const promises = Array(size).fill(0)
-            .map((_, i) => insert(i+1, failSec));
-
-        const result = await Promise.allSettled(promises);
+        const result = await Promise.allSettled(Array(size).fill(0)
+            .map((_, i) => insert(i+1, failSec)));
 
         if(result.length > 0) {
             throw new Error('Promise.allSettled exist Error');
@@ -78,9 +76,8 @@ export async function insertAllWithPool(size: number, failSec: number) {
     try {
         await client.query('BEGIN');
 
-        const promises = Array(size).fill(0)
-            .map((_, i) => insertWithPool(client, i+1, failSec));
-        await Promise.all(promises)
+        await Promise.all(Array(size).fill(0)
+            .map((_, i) => insertWithPool(client, i+1, failSec)))
 
         await commit(client);
     } catch (error) {
@@ -97,10 +94,8 @@ export async function insertAllWithPool2(size: number, failSec: number) {
     try {
         await client.query('BEGIN');
 
-        const promises = Array(size).fill(0)
-            .map((_, i) => insertWithPool(client, i+1, failSec));
-
-        const result = await Promise.allSettled(promises);
+        const result = await Promise.allSettled(Array(size).fill(0)
+            .map((_, i) => insertWithPool(client, i+1, failSec)));
 
         if(result.length > 0) {
             throw new Error('Promise.allSettled exist Error');
@@ -120,10 +115,10 @@ export async function insertWithPool(client:PoolClient, sec: number, failSec: nu
         throw new Error('Insert Exception');
     }
 
-    const start = new Date().getMilliseconds();
+    const start = performance.now();
     const sql = `insert into sample (created_at, updated_at, name, amount, order_date, order_date_time) values (now(), now(), pg_sleep(${sec}), ${sec}, now(), now())`;
     const result = await client.query(sql);
-    console.log(`sec=${sec}: \t${new Date().getMilliseconds() - start} ms`);
+    console.log(`sec=${sec}: \t${performance.now() - start} ms`);
     return result;
 }
 
