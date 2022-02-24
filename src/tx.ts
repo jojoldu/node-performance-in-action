@@ -17,9 +17,8 @@ export async function insertAll(size: number, failSec: number) {
     try {
         await client.query('BEGIN');
 
-        const promises = Array(size).fill(0)
-            .map((_, i) => insert(i+1, failSec));
-        await Promise.all(promises)
+        await Promise.all(Array(size).fill(0)
+            .map((_, i) => insert(i+1, failSec)))
 
        await commit(client);
     } catch (error) {
@@ -36,10 +35,8 @@ export async function insertAll2(size: number, failSec: number) {
     try {
         await client.query('BEGIN');
 
-        const promises = Array(size).fill(0)
-            .map((_, i) => insert(i+1, failSec));
-
-        const result = await Promise.allSettled(promises);
+        const result = await Promise.allSettled(Array(size).fill(0)
+            .map((_, i) => insert(i+1, failSec)));
 
         if(result.length > 0) {
             throw new Error('Promise.allSettled exist Error');
@@ -70,9 +67,8 @@ export async function insertAllWithPool(size: number, failSec: number) {
     try {
         await client.query('BEGIN');
 
-        const promises = Array(size).fill(0)
-            .map((_, i) => insertWithPool(client, i+1, failSec));
-        await Promise.all(promises)
+        await Promise.all(Array(size).fill(0)
+            .map((_, i) => insertWithPool(client, i+1, failSec)))
 
         await commit(client);
     } catch (error) {
@@ -89,10 +85,8 @@ export async function insertAllWithPool2(size: number, failSec: number) {
     try {
         await client.query('BEGIN');
 
-        const promises = Array(size).fill(0)
-            .map((_, i) => insertWithPool(client, i+1, failSec));
-
-        const result = await Promise.allSettled(promises);
+        const result = await Promise.allSettled(Array(size).fill(0)
+            .map((_, i) => insertWithPool(client, i+1, failSec)));
 
         if(result.length > 0) {
             throw new Error('Promise.allSettled exist Error');
