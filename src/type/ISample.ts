@@ -1,6 +1,7 @@
-interface ISample {
+interface INodeTest {
     id: string,
-    amount: number,
-    name: string
+    created_at: Date,
+    name: string,
+    sleep: string
 }
 
