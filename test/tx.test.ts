@@ -31,7 +31,7 @@ describe('tx', () => {
         console.log(result.map(r => r.amount));
         expect(result.length).toBe(0);
 
-    }, 10000);
+    }, 60000);
 
     it('insertAll2', async () => {
         await insertAll2(3, 2);
@@ -45,17 +45,17 @@ describe('tx', () => {
     }, 60000);
 
     it('insertAllWithPool', async () => {
-        await insertAllWithPool(3, 2);
+        await insertAllWithPool(5, 3);
 
         const result = await selectAll();
 
         console.log(result.map(r => r.amount));
         expect(result.length).toBe(0);
 
-    }, 10000);
+    }, 60000);
 
     it('insertAllWithPool2', async () => {
-        await insertAllWithPool2(3, 2);
+        await insertAllWithPool2(5, 3);
 
         const result = await selectAll();
 
