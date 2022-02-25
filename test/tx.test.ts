@@ -1,14 +1,14 @@
-import { deleteAll, insert, insertAll, insertAll2, insertAllWithPool, insertAllWithPool2, selectAll } from '../src/tx';
+import { insert, insertAll, insertAllWithAllSettled, insertAllWithPool, insertAllWithPoolAndAllSettled, selectAll } from '../src/tx';
 import { Pool } from 'pg';
 import { database } from '../src/database';
 
 describe('tx', () => {
-    function sleep(ms) {
-        return new Promise((resolve) => {
-            setTimeout(resolve, ms);
-        });
-    }
     const pool:Pool = database();
+
+    async function deleteAll() {
+        const client = await pool.connect();
+        await client.query('delete from node_test');
+    }
 
     beforeAll(async () => {
         const client = await pool.connect();
@@ -33,40 +33,32 @@ describe('tx', () => {
         await deleteAll();
     });
 
-    afterEach(async () => {
-        await deleteAll();
-    });
-
     it('insert - select', async () => {
-        await insert(0.1, 10);
+        await insert(1, 10, 'test-insert');
         const result = await selectAll();
 
         expect(result.length).toBe(1);
     });
 
-    it('insertAll', async () => {
+    it('[promise.all & pool 재사용 X] 1건이 실패해도 다른 promise는 실패하지 않으며, 데이터 롤백은 되지 않는다.', async () => {
         await insertAll(3, 2);
 
-        await sleep(5000);
         const result = await selectAll();
 
-        console.log(result.map(r => r.name));
         expect(result.length).toBe(0);
 
     }, 60000);
 
-    it('insertAll2', async () => {
-        await insertAll2(3, 2);
+    it('[promise.allSettled & pool 재사용 X] 다른 promise들의 결과를 다 수신해서 실패처리하지만, 데이터 롤백은 되지 않는다', async () => {
+        await insertAllWithAllSettled(3, 2);
 
-        await sleep(5000);
         const result = await selectAll();
 
-        console.log(result.map(r => r.name));
         expect(result.length).toBe(0);
 
     }, 60000);
 
-    it('insertAllWithPool', async () => {
+    it('[promise.all & pool 재사용 O] connection 사용을 위해 대기하고, 데이터 롤백 된다', async () => {
         await insertAllWithPool(5, 3);
 
         const result = await selectAll();
@@ -76,8 +68,8 @@ describe('tx', () => {
 
     }, 60000);
 
-    it('insertAllWithPool2', async () => {
-        await insertAllWithPool2(5, 3);
+    it('[promise.allSettled & pool 재사용 O] connection 사용을 위해 대기하고, 데이터 롤백 된다', async () => {
+        await insertAllWithPoolAndAllSettled(5, 3);
 
         const result = await selectAll();
 
