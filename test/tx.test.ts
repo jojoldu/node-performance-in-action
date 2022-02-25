@@ -1,9 +1,17 @@
-import { insert, insertAll, insertAllWithAllSettled, insertAllWithPool, insertAllWithPoolAndAllSettled, selectAll } from '../src/tx';
+import {
+    insertWithPerformance,
+    insertAll,
+    insertAllWithAllSettled,
+    insertAllWithPool,
+    insertAllWithPoolAndAllSettled,
+    selectAll
+} from '../src/tx';
 import { Pool } from 'pg';
 import { database } from '../src/database';
+import { sleep, sleepThrow } from '../src/sleep';
 
 describe('tx', () => {
-    const pool:Pool = database();
+    let pool: Pool;
 
     async function deleteAll() {
         const client = await pool.connect();
@@ -11,6 +19,7 @@ describe('tx', () => {
     }
 
     beforeAll(async () => {
+        pool = database();
         const client = await pool.connect();
 
         await client.query('drop table node_test');
@@ -33,8 +42,34 @@ describe('tx', () => {
         await deleteAll();
     });
 
+    it('promise.all - sleep', async () => {
+        try {
+            await Promise.all([
+                sleep(1),
+                sleep(2),
+                sleepThrow(3),
+                sleep(4),
+            ]);
+        } catch (e) {
+            console.log(e);
+            console.log('(mock) tx rollback!');
+        }
+    });
+
+    it('promise.allSettled - sleep', async () => {
+        const result = await Promise.allSettled([
+            sleep(1),
+            sleep(2),
+            sleepThrow(3),
+            sleep(4),
+        ]);
+
+        console.log(result.map(r => r.status));
+        console.log('test finish!');
+    });
+
     it('insert - select', async () => {
-        await insert(1, 10, 'test-insert');
+        await insertWithPerformance(1, 10, 'test-insert');
         const result = await selectAll();
 
         expect(result.length).toBe(1);

@@ -18,13 +18,13 @@ export async function insertAll(size: number, failNumber: number) {
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
-        const promises = [];
-        for (let i = 1; i <= size; i++) {
-            promises.push(insert(i, failNumber, 'insertAll'));
-        }
 
-        console.log('promise.all start');
-        await Promise.all(promises);
+        await Promise.all([
+            insert(1, failNumber, 'insertAll'),
+            insert(2, failNumber, 'insertAll'),
+            insertThrow(3, failNumber, 'insertAll'),
+            insert(4, failNumber, 'insertAll'),
+        ]);
 
         await commit(client);
     } catch (error) {
@@ -41,15 +41,14 @@ export async function insertAllWithAllSettled(size: number, failNumber: number) 
     try {
         await client.query('BEGIN');
 
-        const promises = [];
-        for (let i = 1; i <= size; i++) {
-            promises.push(insert(i, failNumber, 'insertAllWithAllSettled'));
-        }
+        const result = await Promise.allSettled([
+            insert(1, failNumber, 'insertAll'),
+            insert(2, failNumber, 'insertAll'),
+            insertThrow(3, failNumber, 'insertAll'),
+            insert(4, failNumber, 'insertAll'),
+        ]);
 
-        console.log('promise.allSettled start');
-        const result = await Promise.allSettled(promises);
-
-        if (result.length > 0) {
+        if (result.map(r => r.status === 'rejected').length > 0) {
             throw new Error('Promise.allSettled exist Error');
         }
 
@@ -67,9 +66,8 @@ export async function insertAllWithPool(size: number, failNumber: number) {
     try {
         await client.query('BEGIN');
 
-        console.log('promise.all start');
         await Promise.all(Array(size).fill(0)
-            .map((_, i) => insert(i + 1, failNumber, 'insertAllWithPoolAndAllSettled', client)))
+            .map((_, i) => insertWithPerformance(i + 1, failNumber, 'insertAllWithPoolAndAllSettled', client)))
 
         await commit(client);
     } catch (error) {
@@ -86,11 +84,10 @@ export async function insertAllWithPoolAndAllSettled(size: number, failNumber: n
     try {
         await client.query('BEGIN');
 
-        console.log('promise.allSettled start');
         const result = await Promise.allSettled(Array(size).fill(0)
-            .map((_, i) => insert(i + 1, failNumber, 'insertAllWithPoolAndAllSettled', client)));
+            .map((_, i) => insertWithPerformance(i + 1, failNumber, 'insertAllWithPoolAndAllSettled', client)));
 
-        if (result.length > 0) {
+        if (result.map(r => r.status === 'rejected').length > 0) {
             throw new Error('Promise.allSettled exist Error');
         }
 
@@ -103,8 +100,7 @@ export async function insertAllWithPoolAndAllSettled(size: number, failNumber: n
     }
 }
 
-
-export async function insert(sec: number, failNumber: number, funcName: string, client?: PoolClient) {
+export async function insertWithPerformance(sec: number, failNumber: number, funcName: string, client?: PoolClient) {
     const start = performance.now();
     const sql = `insert into node_test (name, sleep)
                  values (\'${funcName}-${sec}\', pg_sleep(${sec}))`;
@@ -120,6 +116,23 @@ export async function insert(sec: number, failNumber: number, funcName: string, 
     }
 
     return result;
+}
+
+export async function insert(sec: number, failNumber: number, funcName: string, client?: PoolClient) {
+    const sql = `insert into node_test (name, sleep)
+                 values (\'${funcName}-${sec}\', pg_sleep(${sec}))`;
+
+    const connection = client ? client : await pool.connect();
+    return connection.query(sql);
+}
+
+export async function insertThrow(sec: number, failNumber: number, funcName: string, client?: PoolClient) {
+    // 오류나는 쿼리
+    const sql = `insert into node_test (name, sleep, throw)
+                 values (\'${funcName}-${sec}\', pg_sleep(${sec}))`;
+
+    const connection = client ? client : await pool.connect();
+    return connection.query(sql);
 }
 
 export async function selectAll(): Promise<INodeTest[]> {
