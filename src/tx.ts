@@ -110,11 +110,32 @@ export async function insertAllWithPoolAndAllSettled(size: number, failNumber: n
     }
 }
 
+export async function insertAllWithForEach(size: number, failNumber: number) {
+    const client = await pool.connect();
+    const funcName = 'insertAllWithForEach'
+    try {
+        await client.query('BEGIN');
+
+        await insert(1, failNumber, funcName, client);
+        await insert(2, failNumber, funcName, client);
+        await insertThrow(3, failNumber, funcName, client);
+        await insert(4, failNumber, funcName, client);
+
+        await commit(client);
+    } catch (error) {
+        console.log('tx rollback', error);
+        await rollback(client);
+    } finally {
+        await client.release();
+    }
+}
+
 export async function insert(sec: number, failNumber: number, funcName: string, client?: PoolClient) {
     const sql = `insert into node_test (name, sleep)
                  values (\'${funcName}-${sec}\', pg_sleep(${sec}))`;
 
     const connection = client ? client : await pool.connect();
+    console.log(`sec=${sec}`);
     return connection.query(sql);
 }
 

@@ -4,7 +4,7 @@ import {
     insertAllWithAllSettled,
     insertAllWithPool,
     insertAllWithPoolAndAllSettled,
-    selectAll
+    selectAll, insertAllWithForEach
 } from '../src/tx';
 import { Pool } from 'pg';
 import { database } from '../src/database';
@@ -22,7 +22,7 @@ describe('tx', () => {
         pool = database();
         const client = await pool.connect();
 
-        await client.query('drop table node_test');
+        await client.query('drop table IF EXISTS node_test');
 
         const ddl = 'create table IF NOT EXISTS public.node_test(\n' +
             '    id bigserial constraint pk_node_test_id primary key,\n' +
@@ -105,6 +105,16 @@ describe('tx', () => {
 
     it('[promise.allSettled & pool 재사용 O] connection 사용을 위해 대기하고, 데이터 롤백 된다', async () => {
         await insertAllWithPoolAndAllSettled(5, 3);
+
+        const result = await selectAll();
+
+        console.log(result.map(r => r.name));
+        expect(result.length).toBe(0);
+
+    }, 60000);
+
+    it('[forEach & pool 재사용 O] connection 사용을 위해 대기하고, 데이터 롤백 된다', async () => {
+        await insertAllWithForEach(5, 3);
 
         const result = await selectAll();
 
