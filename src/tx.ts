@@ -14,40 +14,18 @@ async function rollback(client: PoolClient) {
     await client.query('ROLLBACK');
 }
 
-
-export async function insertAllWithPool(size: number, failNumber: number) {
-    const client = await pool.connect();
-    const funcName = 'insertAllWithPool'
-    try {
-        await client.query('BEGIN');
-
-        await Promise.all([
-            insert(1, failNumber, funcName, client),
-            insert(2, failNumber, funcName, client),
-            insertThrow(3, failNumber, funcName, client),
-            insert(4, failNumber, funcName, client)
-        ]);
-
-        await commit(client);
-    } catch (error) {
-        console.log('tx rollback', error);
-        await rollback(client);
-    } finally {
-        await client.release();
-    }
-}
-
-export async function insertAllWithPoolAndAllSettled(size: number, failNumber: number) {
+export async function insertAllWithPoolAndAllSettled() {
     const client = await pool.connect();
     const funcName = 'insertAllWithPoolAndAllSettled'
     try {
         await client.query('BEGIN');
 
         const result = await Promise.allSettled([
-            insert(1, failNumber, funcName, client),
-            insert(2, failNumber, funcName, client),
-            insertThrow(3, failNumber, funcName, client),
-            insert(4, failNumber, funcName, client)
+            insert(1, funcName, client),
+            insert(2, funcName, client),
+            insert(3, funcName, client),
+            insertThrow(4, funcName, client),
+            insert(5, funcName, client)
         ]);
 
         if (result.map(r => r.status === 'rejected').length > 0) {
@@ -63,17 +41,68 @@ export async function insertAllWithPoolAndAllSettled(size: number, failNumber: n
     }
 }
 
-export async function insertAll(size: number, failNumber: number) {
+export async function insertAllWithPool() {
+    const client = await pool.connect();
+    const funcName = 'insertAllWithPool'
+    try {
+        await client.query('BEGIN');
+
+        await Promise.all([
+            insert(1, funcName, client),
+            insert(2, funcName, client),
+            insert(3, funcName, client),
+            insertThrow(4, funcName, client),
+            insert(5, funcName, client)
+        ]);
+
+        await commit(client);
+    } catch (error) {
+        console.log('tx rollback', error);
+        await rollback(client);
+    } finally {
+        await client.release();
+    }
+}
+
+export async function insertAllWithAllSettled() {
+    const client = await pool.connect();
+    const funcName = 'insertAllWithAllSettled'
+    try {
+        await client.query('BEGIN');
+
+        const result = await Promise.allSettled([
+            insert(1, funcName),
+            insert(2, funcName),
+            insert(3, funcName),
+            insertThrow(4, funcName),
+            insert(5, funcName)
+        ]);
+
+        if (result.map(r => r.status === 'rejected').length > 0) {
+            throw new Error('Promise.allSettled exist Error');
+        }
+
+        await commit(client);
+    } catch (error) {
+        console.log('tx rollback', error);
+        await rollback(client);
+    } finally {
+        await client.release();
+    }
+}
+
+export async function insertAll() {
     const client = await pool.connect();
     const funcName = 'insertAll';
     try {
         await client.query('BEGIN');
 
         await Promise.all([
-            insert(1, failNumber, funcName),
-            insert(2, failNumber, funcName),
-            insertThrow(3, failNumber, funcName),
-            insert(4, failNumber, funcName),
+            insert(1, funcName),
+            insert(2, funcName),
+            insert(3, funcName),
+            insertThrow(4, funcName),
+            insert(5, funcName)
         ]);
 
         await commit(client);
@@ -85,43 +114,16 @@ export async function insertAll(size: number, failNumber: number) {
     }
 }
 
-export async function insertAllWithAllSettled(size: number, failNumber: number) {
-    const client = await pool.connect();
-    const funName = 'insertAllWithAllSettled'
-    try {
-        await client.query('BEGIN');
-
-        const result = await Promise.allSettled([
-            insert(1, failNumber, funName),
-            insert(2, failNumber, funName),
-            insertThrow(3, failNumber, funName),
-            insert(4, failNumber, funName),
-        ]);
-
-        if (result.map(r => r.status === 'rejected').length > 0) {
-            throw new Error('Promise.allSettled exist Error');
-        }
-
-        await commit(client);
-    } catch (error) {
-        console.log('tx rollback', error);
-        await rollback(client);
-    } finally {
-        await client.release();
-    }
-}
-
-
-export async function insertAllWithForEach(size: number, failNumber: number) {
+export async function insertAllWithForEach() {
     const client = await pool.connect();
     const funcName = 'insertAllWithForEach'
     try {
         await client.query('BEGIN');
 
-        await insert(1, failNumber, funcName, client);
-        await insert(2, failNumber, funcName, client);
-        await insertThrow(3, failNumber, funcName, client);
-        await insert(4, failNumber, funcName, client);
+        await insert(1, funcName, client);
+        await insert(2, funcName, client);
+        await insertThrow(3, funcName, client);
+        await insert(4, funcName, client);
 
         await commit(client);
     } catch (error) {
@@ -132,40 +134,26 @@ export async function insertAllWithForEach(size: number, failNumber: number) {
     }
 }
 
-export async function insert(sec: number, failNumber: number, funcName: string, client?: PoolClient) {
+export async function insert(sec: number, funcName: string, client?: PoolClient) {
+    const start = performance.now();
     const sql = `insert into node_test (name, sleep)
                  values (\'${funcName}-${sec}\', pg_sleep(${sec}))`;
 
     const connection = client ? client : await pool.connect();
-    console.log(`sec=${sec}`);
-    return connection.query(sql);
+    return connection.query(sql)
+        .then((result) => {
+            console.log(`insert: ${sec}s, realTime: ${performance.now()- start}`);
+            return result;
+        });
 }
 
-export async function insertThrow(sec: number, failNumber: number, funcName: string, client?: PoolClient) {
+export async function insertThrow(sec: number, funcName: string, client?: PoolClient) {
     // 오류나는 쿼리
     const sql = `insert into node_test (name, sleep, throw)
                  values (\'${funcName}-${sec}\', pg_sleep(${sec}))`;
 
     const connection = client ? client : await pool.connect();
     return connection.query(sql);
-}
-
-export async function insertWithPerformance(sec: number, failNumber: number, funcName: string, client?: PoolClient) {
-    const start = performance.now();
-    const sql = `insert into node_test (name, sleep)
-                 values (\'${funcName}-${sec}\', pg_sleep(${sec}))`;
-
-    const connection = client ? client : await pool.connect();
-    const result = await connection.query(sql);
-
-    console.log(`sec=${sec}s: \t${performance.now() - start} ms`);
-
-    if (sec === failNumber) {
-        console.log(`Insert Exception: failNumber=${failNumber}`);
-        throw new Error('Insert Exception');
-    }
-
-    return result;
 }
 
 export async function selectAll(): Promise<INodeTest[]> {
