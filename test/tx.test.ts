@@ -75,23 +75,6 @@ describe('tx', () => {
         expect(result.length).toBe(1);
     });
 
-    it('[promise.all & pool 재사용 X] 1건이 실패해도 다른 promise는 실패하지 않으며, 데이터 롤백은 되지 않는다.', async () => {
-        await insertAll(3, 2);
-
-        const result = await selectAll();
-
-        expect(result.length).toBe(0);
-
-    }, 60000);
-
-    it('[promise.allSettled & pool 재사용 X] 다른 promise들의 결과를 다 수신해서 실패처리하지만, 데이터 롤백은 되지 않는다', async () => {
-        await insertAllWithAllSettled(3, 2);
-
-        const result = await selectAll();
-
-        expect(result.length).toBe(0);
-
-    }, 60000);
 
     it('[promise.all & pool 재사용 O] connection 사용을 위해 대기하고, 데이터 롤백 된다', async () => {
         await insertAllWithPool(5, 3);
@@ -112,6 +95,25 @@ describe('tx', () => {
         expect(result.length).toBe(0);
 
     }, 60000);
+
+    it('[promise.all & pool 재사용 X] 1건이 실패해도 다른 promise는 실패하지 않으며, 데이터 롤백은 되지 않는다.', async () => {
+        await insertAll(3, 2);
+
+        const result = await selectAll();
+
+        expect(result.length).toBe(0);
+
+    }, 60000);
+
+    it('[promise.allSettled & pool 재사용 X] 다른 promise들의 결과를 다 수신해서 실패처리하지만, 데이터 롤백은 되지 않는다', async () => {
+        await insertAllWithAllSettled(3, 2);
+
+        const result = await selectAll();
+
+        expect(result.length).toBe(0);
+
+    }, 60000);
+
 
     it('[forEach & pool 재사용 O] connection 사용을 위해 대기하고, 데이터 롤백 된다', async () => {
         await insertAllWithForEach(5, 3);
