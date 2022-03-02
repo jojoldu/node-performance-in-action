@@ -197,7 +197,7 @@ export async function insertAllWithPoolAndAllSettled() {
             insert(5, funcName, client)
         ]);
 
-        if (result.map(r => r.status === 'rejected').length > 0) {
+        if (result.filter(r => r.status === 'rejected').length > 0) {
             throw new Error('Promise.allSettled exist Error');
         }
 
@@ -306,7 +306,7 @@ export async function insertAllWithAllSettled() {
             insert(4, failNumber, funName),
         ]);
 
-        if (result.map(r => r.status === 'rejected').length > 0) {
+        if (result.filter(r => r.status === 'rejected').length > 0) {
             throw new Error('Promise.allSettled exist Error');
         }
 
